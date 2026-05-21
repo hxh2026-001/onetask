@@ -1,0 +1,89 @@
+:root {
+  --parchment-bg: #f4e9d8;
+  --ink-dark: #2c1810;
+  --ink-red: #8b0000;
+  --ink-gold: #b8860b;
+  --ink-green: #2e8b57;
+  --ink-blue: #1e3a5f;
+  --border-dark: #5c4033;
+  --glow-green: #00ff88;
+  --glow-red: #ff4444;
+  --glow-gold: #ffd700;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Serif SC', serif;
+  background: 
+    radial-gradient(ellipse at top, #f8f0e0 0%, #e8dcc8 50%, #d4c4a8 100%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+  background-blend-mode: multiply;
+  color: var(--ink-dark);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+@keyframes inkSpread {
+  0% { opacity: 0; transform: scale(0.8); filter: blur(4px); }
+  50% { opacity: 0.8; filter: blur(1px); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { filter: drop-shadow(0 0 5px currentColor); }
+  50% { filter: drop-shadow(0 0 20px currentColor); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes arcFlash {
+  0%, 100% { opacity: 0; stroke-width: 1; }
+  10%, 30% { opacity: 1; stroke-width: 3; }
+  20%, 40% { opacity: 0.5; stroke-width: 2; }
+}
+
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink {
+  0%, 50% { border-color: transparent; }
+  51%, 100% { border-color: var(--ink-dark); }
+}
+
+.ink-text {
+  animation: inkSpread 0.8s ease-out forwards;
+}
+
+.glow-green {
+  color: var(--ink-green);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.glow-red {
+  color: var(--ink-red);
+  animation: pulseGlow 1s ease-in-out infinite;
+}
+
+.floating {
+  animation: float 3s ease-in-out infinite;
+}

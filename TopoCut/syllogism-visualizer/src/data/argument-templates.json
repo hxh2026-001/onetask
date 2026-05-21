@@ -1,0 +1,165 @@
+{
+  "templates": [
+    {
+      "id": "barbara",
+      "name": "AAA-1 (Barbara)",
+      "figure": 1,
+      "mood": "AAA",
+      "description": "第一格AAA式，最经典的三段论形式",
+      "propositions": {
+        "major": {
+          "type": "A",
+          "subject": "M",
+          "predicate": "P",
+          "distribution": { "subject": true, "predicate": false }
+        },
+        "minor": {
+          "type": "A",
+          "subject": "S",
+          "predicate": "M",
+          "distribution": { "subject": true, "predicate": false }
+        },
+        "conclusion": {
+          "type": "A",
+          "subject": "S",
+          "predicate": "P",
+          "distribution": { "subject": true, "predicate": false }
+        }
+      },
+      "valid": true,
+      "example": {
+        "major": "所有人都是会死的",
+        "minor": "苏格拉底是人",
+        "conclusion": "苏格拉底是会死的"
+      }
+    },
+    {
+      "id": "celarent",
+      "name": "EAE-1 (Celarent)",
+      "figure": 1,
+      "mood": "EAE",
+      "description": "第一格EAE式",
+      "propositions": {
+        "major": { "type": "E", "subject": "M", "predicate": "P" },
+        "minor": { "type": "A", "subject": "S", "predicate": "M" },
+        "conclusion": { "type": "E", "subject": "S", "predicate": "P" }
+      },
+      "valid": true
+    },
+    {
+      "id": "darii",
+      "name": "AII-1 (Darii)",
+      "figure": 1,
+      "mood": "AII",
+      "description": "第一格AII式",
+      "propositions": {
+        "major": { "type": "A", "subject": "M", "predicate": "P" },
+        "minor": { "type": "I", "subject": "S", "predicate": "M" },
+        "conclusion": { "type": "I", "subject": "S", "predicate": "P" }
+      },
+      "valid": true
+    },
+    {
+      "id": "ferio",
+      "name": "EIO-1 (Ferio)",
+      "figure": 1,
+      "mood": "EIO",
+      "description": "第一格EIO式",
+      "propositions": {
+        "major": { "type": "E", "subject": "M", "predicate": "P" },
+        "minor": { "type": "I", "subject": "S", "predicate": "M" },
+        "conclusion": { "type": "O", "subject": "S", "predicate": "P" }
+      },
+      "valid": true
+    },
+    {
+      "id": "preset1",
+      "name": "预设一：肯定后件谬误",
+      "figure": 2,
+      "mood": "AAA",
+      "description": "如果P则Q，Q，所以P。这是形式谬误中的肯定后件",
+      "fallacyType": "affirming_the_consequent",
+      "propositions": {
+        "major": { "type": "A", "subject": "P", "predicate": "Q" },
+        "minor": { "type": "A", "subject": "X", "predicate": "Q" },
+        "conclusion": { "type": "A", "subject": "X", "predicate": "P" }
+      },
+      "valid": false,
+      "example": {
+        "major": "如果下雨，地面就会湿",
+        "minor": "地面湿了",
+        "conclusion": "所以下雨了"
+      }
+    },
+    {
+      "id": "preset2",
+      "name": "预设二：四项错误",
+      "figure": 1,
+      "mood": "AAA",
+      "description": "三段论中出现了四个不同的词项，违反了'只能有三个词项'的规则",
+      "fallacyType": "four_terms",
+      "propositions": {
+        "major": { "type": "A", "subject": "M1", "predicate": "P" },
+        "minor": { "type": "A", "subject": "S", "predicate": "M2" },
+        "conclusion": { "type": "A", "subject": "S", "predicate": "P" }
+      },
+      "valid": false,
+      "example": {
+        "major": "中国人是勤劳勇敢的",
+        "minor": "他是中国人",
+        "conclusion": "所以他是勤劳勇敢的"
+      },
+      "ambiguityNote": "大前提中的'中国人'是集合概念，小前提中的'中国人'是非集合概念"
+    },
+    {
+      "id": "preset3",
+      "name": "预设三：存在预设陷阱",
+      "figure": 1,
+      "mood": "AAI",
+      "description": "从全称前提推出特称结论，假设了主项存在",
+      "fallacyType": "existential_import",
+      "propositions": {
+        "major": { "type": "A", "subject": "M", "predicate": "P" },
+        "minor": { "type": "A", "subject": "S", "predicate": "M" },
+        "conclusion": { "type": "I", "subject": "S", "predicate": "P" }
+      },
+      "valid": false,
+      "example": {
+        "major": "所有火星人都是外星人",
+        "minor": "所有火星人都是智慧生物",
+        "conclusion": "所以有些智慧生物是外星人"
+      },
+      "existentialNote": "前提假设了火星人存在，但实际上火星人可能不存在"
+    },
+    {
+      "id": "preset4",
+      "name": "预设四：连锁悖论",
+      "figure": "sorites",
+      "mood": "sorites",
+      "description": "多个三段论连锁，移除中间结论形成的复杂论证链",
+      "fallacyType": "sorites_paradox",
+      "propositions": {
+        "major": { "type": "A", "subject": "A", "predicate": "B" },
+        "minor": { "type": "A", "subject": "B", "predicate": "C" },
+        "conclusion": { "type": "A", "subject": "A", "predicate": "D" }
+      },
+      "valid": "conditional",
+      "additionalPremises": [
+        { "type": "A", "subject": "C", "predicate": "D" }
+      ],
+      "example": {
+        "major": "一粒谷子不能形成谷堆",
+        "minor": "再加一粒也不能形成谷堆",
+        "additional": ["...", "所以无论多少粒谷子都不能形成谷堆"],
+        "conclusion": "谷堆不存在"
+      },
+      "paradoxNote": "每一步看似合理，但整体导致荒谬结论"
+    }
+  ],
+  "validMoods": {
+    "1": ["AAA", "EAE", "AII", "EIO", "AAI", "EAO"],
+    "2": ["AEE", "EAE", "AOO", "EIO", "AEO", "EAO"],
+    "3": ["AAI", "IAI", "AII", "EAO", "OAO", "EIO"],
+    "4": ["AAI", "AEE", "IAI", "EAO", "EIO", "AEO"]
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "formalFallacies": {
+    "affirming_the_consequent": {
+      "name": "肯定后件谬误",
+      "latinName": "Affirming the Consequent",
+      "description": "形式为：如果P则Q，Q，所以P。这是对充分条件假言推理的错误使用。",
+      "structure": "P→Q, Q ⊢ P",
+      "example": "如果下雨，地面就会湿。地面湿了，所以下雨了。",
+      "severity": "high",
+      "detectionRules": [
+        "假言命题的后件被肯定",
+        "结论肯定了前件",
+        "违反了充分条件推理规则"
+      ],
+      "relatedFallacies": ["denying_the_antecedent"]
+    },
+    "denying_the_antecedent": {
+      "name": "否定前件谬误",
+      "latinName": "Denying the Antecedent",
+      "description": "形式为：如果P则Q，非P，所以非Q。",
+      "structure": "P→Q, ¬P ⊢ ¬Q",
+      "example": "如果下雨，地面就会湿。没下雨，所以地面不湿。",
+      "severity": "high"
+    },
+    "four_terms": {
+      "name": "四项错误",
+      "latinName": "Quaternio Terminorum",
+      "description": "三段论中出现了四个不同的词项，违反了三段论只能有三个词项的基本规则。",
+      "structure": "M1-P, S-M2 ⊢ S-P",
+      "example": "中国人是勤劳勇敢的；他是中国人；所以他是勤劳勇敢的。",
+      "severity": "critical",
+      "detectionRules": [
+        "三段论中出现四个不同的词项",
+        "中项在大小前提中含义不同",
+        "存在歧义或偷换概念"
+      ],
+      "subtypes": [
+        "ambiguous_middle",
+        "collective_distributive_confusion"
+      ]
+    },
+    "undistributed_middle": {
+      "name": "中项不周延",
+      "latinName": "Undistributed Middle",
+      "description": "中项在两个前提中都不周延，无法起到媒介作用。",
+      "structure": "P-M, S-M ⊢ S-P",
+      "example": "所有猫都是动物，所有狗都是动物，所以所有狗都是猫。",
+      "severity": "high",
+      "detectionRules": [
+        "中项在大前提中不周延",
+        "中项在小前提中不周延",
+        "第二格AAA式等无效形式"
+      ]
+    },
+    "illicit_major": {
+      "name": "大项不当周延",
+      "latinName": "Illicit Major",
+      "description": "大项在前提中不周延但在结论中周延。",
+      "severity": "high"
+    },
+    "illicit_minor": {
+      "name": "小项不当周延",
+      "latinName": "Illicit Minor",
+      "description": "小项在前提中不周延但在结论中周延。",
+      "severity": "high"
+    },
+    "exclusive_premises": {
+      "name": "两否定前提",
+      "latinName": "Exclusive Premises",
+      "description": "从两个否定前提得出结论。",
+      "severity": "high"
+    },
+    "existential_import": {
+      "name": "存在预设谬误",
+      "latinName": "Existential Fallacy",
+      "description": "从全称前提推出特称结论，假设了主项所指称的对象存在。",
+      "structure": "从'所有S是P'推出'有些S是P'",
+      "example": "所有火星人都是智慧生物，所以有些智慧生物是火星人。",
+      "severity": "medium",
+      "philosophicalNote": "在传统逻辑中这是有效的，但在现代逻辑中，全称命题不包含存在承诺。"
+    }
+  },
+  "informalFallacies": {
+    "equivocation": {
+      "name": "歧义谬误",
+      "description": "在论证中有意或无意地使用多义词的不同含义。",
+      "severity": "high",
+      "examples": [
+        "银行在河边，他存钱在银行，所以他在河边存钱。"
+      ]
+    },
+    "circular_reasoning": {
+      "name": "循环论证",
+      "latinName": "Petitio Principii",
+      "description": "结论已经被包含在前提中。",
+      "severity": "medium"
+    },
+    "sorites_paradox": {
+      "name": "连锁悖论",
+      "latinName": "Sorites Paradox",
+      "description": "通过一系列看似合理的微小增量，最终得出荒谬结论。",
+      "structure": "A1→A2, A2→A3, ..., An-1→An ⊢ A1→An",
+      "example": "一粒谷子不能形成谷堆；再加一粒也不能；...所以无论多少粒都不能形成谷堆。",
+      "severity": "high",
+      "paradoxType": "vagueness",
+      "keyIssue": "模糊谓词的累积应用导致边界问题"
+    },
+    "complex_question": {
+      "name": "复杂问句",
+      "description": "问句中预设了某些未经证实的前提。",
+      "severity": "low"
+    }
+  },
+  "detectionPriority": [
+    "four_terms",
+    "undistributed_middle",
+    "illicit_major",
+    "illicit_minor",
+    "affirming_the_consequent",
+    "denying_the_antecedent",
+    "existential_import",
+    "equivocation",
+    "circular_reasoning",
+    "sorites_paradox"
+  ]
+}
