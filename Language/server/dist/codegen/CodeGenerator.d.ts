@@ -1,0 +1,41 @@
+import { ASTNode } from '../types/ast';
+import { CodeGenResult } from '../types/codegen';
+import { Scope } from '../types/typechecker';
+export declare class CodeGenerator {
+    private lines;
+    private errors;
+    private closureOffsets;
+    private addressErrors;
+    private lineEvents;
+    private currentLine;
+    private labelCounter;
+    private varAddresses;
+    private currentAddress;
+    private capturedVarOffsets;
+    generate(ast: ASTNode | null, scopes?: Record<number, Scope>): CodeGenResult;
+    private buildResult;
+    private addCode;
+    private addLabel;
+    private addComment;
+    private addHeader;
+    private generateNode;
+    private generateProgram;
+    private generateVariableDeclaration;
+    private generateFunctionDeclaration;
+    private generateBlockStatement;
+    private generateExpressionStatement;
+    private generateReturnStatement;
+    private generateIfStatement;
+    private generateWhileStatement;
+    private generateBinaryExpression;
+    private generateUnaryExpression;
+    private generateCallExpression;
+    private generateAssignmentExpression;
+    private generateIdentifier;
+    private generateNumberLiteral;
+    private generateStringLiteral;
+    private generateBooleanLiteral;
+    private generateClosureExpression;
+    private allocateVariable;
+}
+//# sourceMappingURL=CodeGenerator.d.ts.map

@@ -1,0 +1,45 @@
+import { Token } from '../types/lexer';
+import { ParserResult } from '../types/ast';
+export declare class Parser {
+    private tokens;
+    private pos;
+    private errors;
+    private recursionDepth;
+    private recursionStack;
+    private infiniteLoopDetected;
+    private loopStackTrace;
+    private callCounts;
+    constructor(tokens: Token[]);
+    parse(): ParserResult;
+    private trackRecursion;
+    private untrackRecursion;
+    private createNode;
+    private currentToken;
+    private consume;
+    private expect;
+    private match;
+    private skipNewlines;
+    private parseProgram;
+    private parseStatement;
+    private parseVariableDeclaration;
+    private parseFunctionDeclaration;
+    private parseBlockStatement;
+    private parseReturnStatement;
+    private parseIfStatement;
+    private parseWhileStatement;
+    private parseForStatement;
+    private parseExpressionStatement;
+    private parseExpression;
+    private parseAssignment;
+    private parseLogicalOr;
+    private parseLogicalAnd;
+    private parseEquality;
+    private parseRelational;
+    private parseAdditive;
+    private parseMultiplicative;
+    private parseUnary;
+    private parseCallMember;
+    private parseClosureExpression;
+    private parsePrimary;
+}
+//# sourceMappingURL=Parser.d.ts.map

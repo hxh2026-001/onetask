@@ -1,0 +1,41 @@
+import { ASTNode } from '../types/ast';
+import { TypeCheckResult } from '../types/typechecker';
+export declare class TypeChecker {
+    private types;
+    private scopes;
+    private currentScopeId;
+    private nextScopeId;
+    private errors;
+    private propagationEvents;
+    private shadowingDetections;
+    private undeclaredAccesses;
+    constructor();
+    check(ast: ASTNode | null): TypeCheckResult;
+    private buildResult;
+    private createScope;
+    private enterScope;
+    private exitScope;
+    private lookupSymbol;
+    private declareSymbol;
+    private checkNode;
+    private getNodeId;
+    private addPropagation;
+    private checkProgram;
+    private checkVariableDeclaration;
+    private checkFunctionDeclaration;
+    private checkBlockStatement;
+    private checkExpressionStatement;
+    private checkReturnStatement;
+    private checkIfStatement;
+    private checkWhileStatement;
+    private checkBinaryExpression;
+    private checkUnaryExpression;
+    private checkCallExpression;
+    private checkAssignmentExpression;
+    private checkIdentifier;
+    private checkNumberLiteral;
+    private checkStringLiteral;
+    private checkBooleanLiteral;
+    private checkClosureExpression;
+}
+//# sourceMappingURL=TypeChecker.d.ts.map
