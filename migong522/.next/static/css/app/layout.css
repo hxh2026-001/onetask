@@ -1,0 +1,72 @@
+/*!*****************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[13].oneOf[12].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[13].oneOf[12].use[3]!./src/app/globals.css ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************/
+:root {
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #1a1a2e;
+  --bg-tertiary: #2a2a4e;
+  --accent-gregorian: #4a9eff;
+  --accent-lunar: #ff6b35;
+  --accent-mayan: #9b59b6;
+  --accent-persian: #2ecc71;
+  --accent-path: #ffd700;
+  --text-primary: #e8e8f0;
+  --text-secondary: #a0a0c0;
+  --text-muted: #606080;
+  --error: #ff4757;
+  --success: #2ed573;
+  --warning: #ffa502;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+}
+
+#__next {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+@keyframes dissolve {
+  0% { opacity: 1; filter: blur(0px); transform: translateY(0); }
+  100% { opacity: 0; filter: blur(10px); transform: translateY(-20px); }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.15); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.1); }
+}
+
+@keyframes sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes mosaic {
+  0% { -webkit-clip-path: inset(0 0 0 0); clip-path: inset(0 0 0 0); }
+  100% { -webkit-clip-path: inset(50% 50% 50% 50%); clip-path: inset(50% 50% 50% 50%); }
+}
+
+.mosaic-broken {
+  animation: mosaic 0.5s forwards;
+  filter: blur(2px) saturate(2);
+}
+
