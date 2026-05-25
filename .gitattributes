@@ -1,1 +1,6 @@
+
+# 追踪所有 .node 文件
 *.node filter=lfs diff=lfs merge=lfs -text
+
+# 如果你还有 .pack.gz 这种大文件，也可以加上
+*.pack.gz filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,572 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  background: #f0f2f5;
+  color: #333;
+  overflow: hidden;
+  height: 100vh;
+}
+
+#app { height: 100vh; display: flex; flex-direction: column; }
+
+/* 顶部工具栏 */
+.toolbar {
+  background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  flex-shrink: 0;
+}
+
+.toolbar h1 {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  margin-right: 20px;
+}
+
+.scenario-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.scenario-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.25s;
+  backdrop-filter: blur(8px);
+}
+
+.scenario-btn:hover {
+  background: rgba(255,255,255,0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.scenario-btn.active {
+  background: #fff;
+  color: #1a73e8;
+  font-weight: 600;
+}
+
+/* 公式栏 */
+.formula-bar {
+  background: #fff;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.cell-address {
+  width: 80px;
+  padding: 6px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  background: #fafafa;
+}
+
+.formula-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.formula-input:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
+}
+
+/* 公式语法着色 */
+.formula-input .token-number { color: #0550ae; }
+.formula-input .token-string { color: #0a3069; }
+.formula-input .token-func { color: #8250df; font-weight: 600; }
+.formula-input .token-cell { color: #0550ae; }
+.formula-input .token-op { color: #cf222e; }
+.formula-input .token-range { color: #953800; }
+.formula-input .token-sheet { color: #8250df; }
+
+/* 主内容区 */
+.main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 电子表格 */
+.spreadsheet-container {
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+  position: relative;
+}
+
+.spreadsheet {
+  display: grid;
+  border-collapse: collapse;
+  min-width: max-content;
+}
+
+.cell {
+  border: 1px solid #e0e0e0;
+  padding: 4px 8px;
+  font-size: 13px;
+  min-width: 80px;
+  max-width: 200px;
+  height: 28px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: cell;
+  background: #fff;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.cell.header {
+  background: linear-gradient(180deg, #f5f7fa 0%, #e8eaed 100%);
+  font-weight: 600;
+  text-align: center;
+  color: #5f6368;
+  min-width: 40px;
+  cursor: default;
+  user-select: none;
+}
+
+.cell.selected {
+  border-color: #1a73e8;
+  border-width: 2px;
+  box-shadow: inset 0 0 0 1px #1a73e8;
+  z-index: 10;
+}
+
+.cell.formula {
+  background: #fef7e0;
+}
+
+.cell.error {
+  background: #fce8e6;
+  color: #d93025;
+  font-weight: 600;
+}
+
+.cell.cycle {
+  background: #fce8e6;
+  color: #d93025;
+}
+
+.cell.spill {
+  background: #e8f5e9;
+  font-style: italic;
+  color: #1e8e3e;
+}
+
+/* 波纹动画 - 从依赖源向外扩散 */
+@keyframes ripple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.6);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(26, 115, 232, 0.1);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(26, 115, 232, 0);
+    transform: scale(1);
+  }
+}
+
+.cell.ripple {
+  animation: ripple 0.6s ease-out;
+}
+
+.cell.ripple-layer-1 { animation-delay: 0.05s; }
+.cell.ripple-layer-2 { animation-delay: 0.1s; }
+.cell.ripple-layer-3 { animation-delay: 0.15s; }
+.cell.ripple-layer-4 { animation-delay: 0.2s; }
+.cell.ripple-layer-5 { animation-delay: 0.25s; }
+
+/* 循环引用红色脉冲动画 */
+@keyframes pulse-red {
+  0%, 100% {
+    background: #fce8e6;
+    box-shadow: 0 0 0 0 rgba(217, 48, 37, 0.7);
+  }
+  50% {
+    background: #ffb3b3;
+    box-shadow: 0 0 0 6px rgba(217, 48, 37, 0);
+  }
+}
+
+.cell.pulse-cycle {
+  animation: pulse-red 1.2s ease-in-out infinite;
+  z-index: 5;
+}
+
+/* 值变更级联更新动画 */
+@keyframes cascade-update {
+  0% {
+    background: #fff59d;
+    transform: scale(1.05);
+  }
+  50% {
+    background: #fff9c4;
+  }
+  100% {
+    background: #fff;
+    transform: scale(1);
+  }
+}
+
+.cell.cascade {
+  animation: cascade-update 0.8s ease-out;
+}
+
+/* 发散型循环引用闪烁 */
+@keyframes divergent-flash {
+  0%, 100% { background: #fce8e6; }
+  25% { background: #ff6b6b; color: #fff; }
+  50% { background: #fce8e6; }
+  75% { background: #ff6b6b; color: #fff; }
+}
+
+.cell.divergent {
+  animation: divergent-flash 0.6s ease-in-out infinite;
+}
+
+/* #REF 错误传播高亮 */
+@keyframes ref-error-spread {
+  0% {
+    background: #fff;
+    border-color: #e0e0e0;
+  }
+  50% {
+    background: #ffb3b3;
+    border-color: #d93025;
+    box-shadow: 0 0 8px rgba(217, 48, 37, 0.5);
+  }
+  100% {
+    background: #fce8e6;
+    border-color: #d93025;
+  }
+}
+
+.cell.ref-error {
+  animation: ref-error-spread 0.8s ease-out forwards;
+  color: #d93025;
+  font-weight: 600;
+}
+
+/* 侧边面板 */
+.sidebar {
+  width: 320px;
+  background: #f8f9fa;
+  border-left: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar-tabs {
+  display: flex;
+  background: #e8eaed;
+}
+
+.sidebar-tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #5f6368;
+  transition: all 0.2s;
+}
+
+.sidebar-tab.active {
+  background: #f8f9fa;
+  color: #1a73e8;
+  font-weight: 600;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+}
+
+.sidebar-section {
+  margin-bottom: 16px;
+}
+
+.sidebar-section h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5f6368;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* 依赖图 */
+.dep-graph {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 12px;
+  min-height: 200px;
+}
+
+.dep-list {
+  font-family: 'Consolas', monospace;
+  font-size: 12px;
+}
+
+.dep-item {
+  padding: 4px 8px;
+  margin-bottom: 2px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dep-item .arrow {
+  color: #1a73e8;
+}
+
+.dep-item.cycle {
+  background: #fce8e6;
+  color: #d93025;
+}
+
+/* 进度条 */
+.progress-container {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e8eaed;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1a73e8, #34a853);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.progress-info {
+  font-size: 12px;
+  color: #5f6368;
+  text-align: center;
+}
+
+/* 工作表标签 */
+.sheet-tabs {
+  background: #f5f7fa;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.sheet-tab {
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.2s;
+  color: #5f6368;
+}
+
+.sheet-tab.active {
+  background: #fff;
+  color: #1a73e8;
+  font-weight: 600;
+  border-color: #e0e0e0;
+}
+
+.sheet-tab:hover:not(.active) {
+  background: #e8eaed;
+}
+
+/* 单元格输入框 */
+.cell-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 2px solid #1a73e8;
+  padding: 2px 6px;
+  font-size: 13px;
+  font-family: 'Consolas', monospace;
+  outline: none;
+  background: #fff;
+  z-index: 100;
+}
+
+/* 公式栏语法渐变动画 */
+.formula-gradient {
+  background: linear-gradient(90deg, #1a73e8, #8250df, #d93025, #1a73e8);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-slide 3s linear infinite;
+}
+
+@keyframes gradient-slide {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+/* 计算状态指示器 */
+.calc-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.calc-indicator.normal {
+  background: #e8f5e9;
+  color: #1e8e3e;
+}
+
+.calc-indicator.calculating {
+  background: #fef7e0;
+  color: #b06000;
+}
+
+.calc-indicator.cycle {
+  background: #fce8e6;
+  color: #d93025;
+}
+
+.calc-indicator .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: blink 1s ease-in-out infinite;
+}
+
+.calc-indicator.normal .dot { background: #1e8e3e; }
+.calc-indicator.calculating .dot { background: #f9ab00; animation: blink 0.5s ease-in-out infinite; }
+.calc-indicator.cycle .dot { background: #d93025; animation: pulse-red 1.2s ease-in-out infinite; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #f1f3f4; }
+::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #bdc1c6; }
+
+/* 动画层 */
+.animation-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.ripple-wave {
+  position: absolute;
+  border: 3px solid rgba(26, 115, 232, 0.6);
+  border-radius: 50%;
+  animation: wave-expand 1s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes wave-expand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    width: 200px;
+    height: 200px;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* 依赖关系连线 */
+.dep-arrow {
+  position: absolute;
+  background: linear-gradient(90deg, #1a73e8, transparent);
+  height: 2px;
+  transform-origin: left center;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.dep-arrow.cycle {
+  background: linear-gradient(90deg, #d93025, transparent);
+}
+
+/* 信息展示区 */
+.info-panel {
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.info-panel .info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+
+.info-panel .info-label {
+  color: #5f6368;
+}
+
+.info-panel .info-value {
+  font-family: 'Consolas', monospace;
+  color: #1a73e8;
+  font-weight: 600;
+}
