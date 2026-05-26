@@ -1,0 +1,36 @@
+{
+  "id": "misleading-heuristic",
+  "name": "预设四：启发函数误导",
+  "description": "欧氏距离看似更近的路径实际代价极高，导致 A* 绕远路",
+  "graph": {
+    "nodes": [
+      {"id": 0, "x": 100, "y": 300, "isStart": true},
+      {"id": 1, "x": 300, "y": 150},
+      {"id": 2, "x": 500, "y": 150},
+      {"id": 3, "x": 700, "y": 150},
+      {"id": 4, "x": 300, "y": 300},
+      {"id": 5, "x": 500, "y": 450},
+      {"id": 6, "x": 700, "y": 450, "isEnd": true}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "weight": 1},
+      {"from": 1, "to": 0, "weight": 1},
+      {"from": 1, "to": 2, "weight": 1},
+      {"from": 2, "to": 1, "weight": 1},
+      {"from": 2, "to": 3, "weight": 1},
+      {"from": 3, "to": 2, "weight": 1},
+      {"from": 3, "to": 6, "weight": 100},
+      {"from": 6, "to": 3, "weight": 100},
+      {"from": 0, "to": 4, "weight": 100},
+      {"from": 4, "to": 0, "weight": 100},
+      {"from": 4, "to": 5, "weight": 1},
+      {"from": 5, "to": 4, "weight": 1},
+      {"from": 5, "to": 6, "weight": 1},
+      {"from": 6, "to": 5, "weight": 1},
+      {"from": 0, "to": 5, "weight": 100},
+      {"from": 5, "to": 0, "weight": 100}
+    ]
+  },
+  "startNode": 0,
+  "endNode": 6
+}

@@ -1,0 +1,39 @@
+{
+  "id": "negative-cycle",
+  "name": "预设一：权重负环陷阱",
+  "description": "负权重环会导致 Dijkstra 算法崩溃或产生无限循环",
+  "graph": {
+    "nodes": [
+      {"id": 0, "x": 550, "y": 300},
+      {"id": 1, "x": 475, "y": 170},
+      {"id": 2, "x": 325, "y": 170},
+      {"id": 3, "x": 250, "y": 300},
+      {"id": 4, "x": 325, "y": 430},
+      {"id": 5, "x": 475, "y": 430},
+      {"id": 6, "x": 100, "y": 300, "isStart": true},
+      {"id": 7, "x": 700, "y": 300, "isEnd": true}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "weight": 3},
+      {"from": 1, "to": 0, "weight": -2},
+      {"from": 1, "to": 2, "weight": 3},
+      {"from": 2, "to": 1, "weight": -2},
+      {"from": 2, "to": 3, "weight": 3},
+      {"from": 3, "to": 2, "weight": -2},
+      {"from": 3, "to": 4, "weight": 3},
+      {"from": 4, "to": 3, "weight": -2},
+      {"from": 4, "to": 5, "weight": 3},
+      {"from": 5, "to": 4, "weight": -2},
+      {"from": 5, "to": 0, "weight": 3},
+      {"from": 0, "to": 5, "weight": -2},
+      {"from": 6, "to": 3, "weight": 5},
+      {"from": 3, "to": 6, "weight": 5},
+      {"from": 0, "to": 7, "weight": 5},
+      {"from": 7, "to": 0, "weight": 5},
+      {"from": 6, "to": 7, "weight": 100},
+      {"from": 7, "to": 6, "weight": 100}
+    ]
+  },
+  "startNode": 6,
+  "endNode": 7
+}
