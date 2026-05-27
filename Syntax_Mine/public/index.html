@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>依存句法树解析器</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --primary: #e74c3c; --secondary: #3498db; --accent: #f39c12; --success: #27ae60; --warning: #e67e22; --danger: #c0392b; }
+body { font-family: 'Noto Sans SC', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; color: #fff; overflow-x: hidden; }
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+header { text-align: center; padding: 30px 0; }
+header h1 { font-size: 2.5rem; background: linear-gradient(135deg, #f39c12, #e74c3c, #9b59b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px; }
+header p { color: #8e9dc0; font-size: 1rem; }
+.main-panel { display: grid; grid-template-columns: 1fr 350px; gap: 25px; margin-top: 20px; }
+@media (max-width: 1024px) { .main-panel { grid-template-columns: 1fr; } }
+.panel { background: rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 25px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+.panel-title { font-size: 1.2rem; color: #f39c12; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid rgba(243, 156, 18, 0.3); display: flex; align-items: center; gap: 10px; }
+.input-section { margin-bottom: 20px; }
+.input-section textarea { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.3); color: #fff; font-size: 1.1rem; font-family: inherit; resize: vertical; min-height: 80px; transition: all 0.3s ease; }
+.input-section textarea:focus { outline: none; border-color: #f39c12; box-shadow: 0 0 20px rgba(243, 156, 18, 0.2); }
+.btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+.btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.95rem; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; }
+.btn-primary { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-secondary { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; }
+.btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(52, 152, 219, 0.4); }
+.btn-preset { background: rgba(155, 89, 182, 0.2); border: 1px solid rgba(155, 89, 182, 0.5); color: #d4a5ff; flex: 1; min-width: 140px; justify-content: center; }
+.btn-preset:hover { background: rgba(155, 89, 182, 0.4); border-color: #9b59b6; }
+.btn-preset.active { background: rgba(155, 89, 182, 0.5); border-color: #9b59b6; animation: pulse-border 1.5s infinite; }
+@keyframes pulse-border { 0%, 100% { box-shadow: 0 0 5px rgba(155, 89, 182, 0.5); } 50% { box-shadow: 0 0 20px rgba(155, 89, 182, 0.8); } }
+.svg-canvas { width: 100%; height: 500px; background: rgba(0, 0, 0, 0.2); border-radius: 12px; border: 2px solid rgba(255, 255, 255, 0.05); overflow: hidden; position: relative; }
+.svg-canvas svg { width: 100%; height: 100%; }
+.word-node { cursor: grab; transition: all 0.2s ease; }
+.word-node:active { cursor: grabbing; }
+.word-node circle { fill: #3498db; stroke: #2980b9; stroke-width: 2; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)); transition: all 0.3s ease; }
+.word-node:hover circle { fill: #5dade2; filter: drop-shadow(0 4px 8px rgba(52, 152, 219, 0.5)); }
+.word-node.node-highlighted circle { fill: #f39c12; stroke: #e67e22; animation: pulse-highlight 1s ease-in-out infinite; }
+@keyframes pulse-highlight { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+.word-node text { fill: #fff; font-size: 14px; font-weight: 500; text-anchor: middle; dominant-baseline: middle; pointer-events: none; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
+.word-node .pos-tag { fill: #f39c12; font-size: 11px; }
+.arc-line { fill: none; stroke-width: 2.5; stroke-linecap: round; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); transition: all 0.3s ease; cursor: pointer; }
+.arc-line:hover, .arc-line.arc-hovered { stroke-width: 4; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)); }
+.arc-label-hovered { font-size: 14px; font-weight: bold; fill: #fff; text-shadow: 0 0 10px currentColor; }
+.arc-line.ROOT { stroke: #e74c3c; stroke-dasharray: 8 4; }
+.arc-line.nsubj { stroke: #3498db; }
+.arc-line.dobj { stroke: #27ae60; }
+.arc-line.advmod { stroke: #9b59b6; }
+.arc-line.det { stroke: #f39c12; }
+.arc-line.ccomp { stroke: #e67e22; }
+.arc-line.amod { stroke: #1abc9c; }
+@keyframes draw-arc { from { stroke-dashoffset: 1000; opacity: 0; } to { stroke-dashoffset: 0; opacity: 1; } }
+.arc-animate { animation: draw-arc 0.8s ease-out forwards; }
+@keyframes conflict-flash { 0%, 100% { fill: rgba(231, 76, 60, 0.3); stroke: #e74c3c; } 25%, 75% { fill: rgba(231, 76, 60, 0.6); stroke: #ff6b6b; } 50% { fill: rgba(231, 76, 60, 0.8); stroke: #ff4757; } }
+.conflict-flash { animation: conflict-flash 0.3s ease-in-out 3; }
+@keyframes spring-vibrate { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+.spring-vibrate { animation: spring-vibrate 0.4s ease-in-out; }
+@keyframes stamp-in { 0% { transform: scale(3) rotate(-15deg); opacity: 0; } 50% { transform: scale(1.1) rotate(5deg); opacity: 1; } 70% { transform: scale(0.95) rotate(-2deg); } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+.stamp-container { position: absolute; pointer-events: none; }
+.stamp { animation: stamp-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.stamp circle { fill: none; stroke: #27ae60; stroke-width: 4; }
+.stamp text { fill: #27ae60; font-size: 24px; font-weight: bold; text-anchor: middle; }
+.stamp.error circle { stroke: #e74c3c; }
+.stamp.error text { fill: #e74c3c; }
+.parse-stack { display: flex; flex-direction: column-reverse; gap: 5px; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; min-height: 150px; }
+.stack-item { padding: 8px 12px; background: rgba(52, 152, 219, 0.2); border-left: 3px solid #3498db; border-radius: 0 4px 4px 0; font-size: 0.9rem; transition: all 0.3s ease; }
+.stack-item.highlight { background: rgba(231, 76, 60, 0.3); border-left-color: #e74c3c; animation: pulse-item 0.5s ease infinite; }
+.stack-item.crash { background: rgba(192, 57, 43, 0.4); border-left-color: #c0392b; animation: crash-shake 0.1s ease infinite; }
+@keyframes pulse-item { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+@keyframes crash-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+.buffer-queue { display: flex; gap: 8px; flex-wrap: wrap; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; min-height: 60px; }
+.buffer-item { padding: 6px 10px; background: rgba(39, 174, 96, 0.2); border: 1px solid rgba(39, 174, 96, 0.4); border-radius: 4px; font-size: 0.85rem; transition: all 0.3s ease; }
+.buffer-item.active { background: rgba(39, 174, 96, 0.5); border-color: #27ae60; transform: scale(1.05); }
+.transition-history { max-height: 200px; overflow-y: auto; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 8px; }
+.transition-item { padding: 6px 10px; margin-bottom: 4px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; font-size: 0.85rem; font-family: 'Courier New', monospace; display: flex; justify-content: space-between; }
+.transition-item .action { color: #f39c12; font-weight: 600; }
+.transition-item .detail { color: #8e9dc0; }
+.info-panel { display: grid; gap: 15px; }
+.info-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 6px; }
+.info-item .label { color: #8e9dc0; font-size: 0.9rem; }
+.info-item .value { color: #fff; font-weight: 600; font-size: 1rem; }
+.info-item .value.error { color: #e74c3c; }
+.info-item .value.warning { color: #f39c12; }
+.info-item .value.success { color: #27ae60; }
+.ambiguity-section { margin-top: 20px; padding: 15px; background: rgba(243, 156, 18, 0.1); border: 1px solid rgba(243, 156, 18, 0.3); border-radius: 10px; }
+.ambiguity-title { color: #f39c12; font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.branch-list { display: flex; flex-direction: column; gap: 8px; }
+.branch-item { padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 6px; border-left: 3px solid #f39c12; cursor: pointer; transition: all 0.3s ease; }
+.branch-item:hover { background: rgba(243, 156, 18, 0.2); transform: translateX(5px); }
+.branch-item.selected { background: rgba(243, 156, 18, 0.3); border-left-color: #e74c3c; }
+.error-box { padding: 15px; background: rgba(231, 76, 60, 0.15); border: 1px solid rgba(231, 76, 60, 0.3); border-radius: 8px; margin-top: 15px; }
+.error-box h4 { color: #e74c3c; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.error-box p { color: #ff8a80; font-size: 0.9rem; line-height: 1.5; }
+.warning-box { padding: 15px; background: rgba(243, 156, 18, 0.15); border: 1px solid rgba(243, 156, 18, 0.3); border-radius: 8px; margin-top: 15px; }
+.warning-box h4 { color: #f39c12; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.warning-box p { color: #ffd180; font-size: 0.9rem; line-height: 1.5; }
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.stat-card { padding: 12px; background: rgba(0, 0, 0, 0.2); border-radius: 8px; text-align: center; }
+.stat-card .stat-value { font-size: 1.5rem; font-weight: 700; color: #3498db; }
+.stat-card .stat-label { font-size: 0.75rem; color: #8e9dc0; margin-top: 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; background: rgba(0, 0, 0, 0.2); border-radius: 8px; margin-bottom: 15px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+.legend-color { width: 20px; height: 4px; border-radius: 2px; }
+.loading { display: flex; justify-content: center; align-items: center; padding: 40px; }
+.spinner { width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: #f39c12; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes attention-overflow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.5); } }
+.attention-overflow { animation: attention-overflow 0.5s ease infinite; }
+@keyframes local-optimum-error { 0%, 100% { stroke: #e74c3c; stroke-width: 2; } 50% { stroke: #ff6b6b; stroke-width: 4; } }
+.local-optimum-error { animation: local-optimum-error 0.4s ease infinite; }
+@keyframes recursion-crash { 0% { transform: scale(1); } 25% { transform: scale(1.1) rotate(-2deg); } 50% { transform: scale(0.9) rotate(2deg); } 75% { transform: scale(1.05) rotate(-1deg); } 100% { transform: scale(1) rotate(0deg); } }
+.recursion-crash { animation: recursion-crash 0.3s ease infinite; }
+.tooltip-container { pointer-events: none; z-index: 1000; }
+.tooltip rect { fill: rgba(0, 0, 0, 0.9); stroke: #f39c12; stroke-width: 2; }
+.tooltip .tooltip-label { fill: #f39c12; font-size: 14px; font-weight: bold; text-anchor: middle; }
+.tooltip .tooltip-desc { fill: #fff; font-size: 12px; text-anchor: middle; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <header>
+        <h1>依存句法树解析器</h1>
+        <p>基于 Arc-Standard 转换系统的神经网络依存分析器</p>
+      </header>
+
+      <div class="main-panel">
+        <div class="left-panel">
+          <div class="panel input-section">
+            <div class="panel-title">输入句子</div>
+            <textarea v-model="inputSentence" placeholder="请输入自然语言句子..." @keydown.enter.ctrl="parseSentence"></textarea>
+            <div class="btn-group" style="margin-top: 15px;">
+              <button class="btn btn-primary" @click="parseSentence" :disabled="isParsing">
+                <span v-if="isParsing" class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></span>
+                <span v-else>搜索</span>
+                {{ isParsing ? '解析中...' : '开始解析' }}
+              </button>
+              <button class="btn btn-secondary" @click="clearAll">清除</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">预设场景</div>
+            <div class="btn-group">
+              <button v-for="preset in presets" :key="preset.id" class="btn btn-preset" :class="{ active: activePreset === preset.id }" @click="loadPreset(preset)">
+                预设{{ preset.id }}：{{ preset.name }}
+              </button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">依存句法树</div>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div><span>ROOT</span></div>
+              <div class="legend-item"><div class="legend-color" style="background: #3498db;"></div><span>nsubj</span></div>
+              <div class="legend-item"><div class="legend-color" style="background: #27ae60;"></div><span>dobj</span></div>
+              <div class="legend-item"><div class="legend-color" style="background: #9b59b6;"></div><span>advmod</span></div>
+              <div class="legend-item"><div class="legend-color" style="background: #f39c12;"></div><span>det</span></div>
+            </div>
+            <div class="svg-canvas" ref="canvasContainer">
+              <svg ref="svgRef">
+                <defs>
+                  <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#3498db" />
+                  </marker>
+                  <marker id="arrowhead-root" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#e74c3c" />
+                  </marker>
+                  <marker id="arrowhead-conflict" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#f39c12" />
+                  </marker>
+                </defs>
+                <g ref="contentGroup">
+                  <path v-for="(arc, idx) in arcs" :key="'arc-' + idx" :d="getArcPath(arc)" :class="['arc-line', arc.label, { 'arc-animate': animationEnabled, 'arc-hovered': hoveredArc === arc }]" :stroke="getArcColor(arc.label)" :stroke-dasharray="arc.label === 'ROOT' ? '8 4' : 'none'" :marker-end="getMarkerUrl(arc)" :style="{ animationDelay: animationEnabled ? (idx * 0.15) + 's' : '0s' }" @mouseenter="handleArcMouseEnter(arc, $event)" @mouseleave="handleArcMouseLeave" />
+                  <text v-for="arc in arcs" :key="'arc-label-' + arc.from + '-' + arc.to" :x="getArcLabelPosition(arc).x" :y="getArcLabelPosition(arc).y" fill="#f39c12" font-size="12" text-anchor="middle" :class="{ 'arc-label-hovered': hoveredArc === arc }">{{ arc.label }}</text>
+                  <g v-for="node in nodes" :key="'node-' + node.id" :class="['word-node', { 'attention-overflow': errorTypeValue === 'attention-overflow' && node.id > 5, 'recursion-crash': errorTypeValue === 'recursion-crash' && node.id > 8, 'node-highlighted': hoveredArc && (hoveredArc.from === node.id || hoveredArc.to === node.id) }]" :transform="'translate(' + (node.x || 0) + ', ' + (node.y || 0) + ')'">
+                    <circle :r="node.id === 0 ? 30 : 25" :class="{ 'conflict-flash': conflictNodesArray.includes(node.id) }" />
+                    <text y="-5" style="fill: #fff; font-size: 14px;">{{ node.word }}</text>
+                    <text y="12" class="pos-tag">[{{ node.pos }}]</text>
+                  </g>
+                </g>
+                <g v-if="hoveredArc" class="tooltip-container" :transform="'translate(' + (tooltipPosition.x - 100) + ', ' + (tooltipPosition.y - 35) + ')'">
+                  <g class="tooltip">
+                    <rect width="200" height="45" rx="6" ry="6" />
+                    <text x="100" y="-4" class="tooltip-label">{{ hoveredArc.label }}</text>
+                    <text x="100" y="12" class="tooltip-desc">{{ getArcDescription(hoveredArc.label) }}</text>
+                  </g>
+                </g>
+                <g v-if="showStamp" class="stamp-container" :transform="stampPositionValue">
+                  <g class="stamp" :class="{ error: !parseResultSuccess }">
+                    <circle r="40" />
+                    <text y="5">{{ stampText }}</text>
+                  </g>
+                </g>
+              </svg>
+            </div>
+          </div>
+
+          <div v-if="hasError" class="error-box">
+            <h4>解析错误</h4>
+            <p>{{ errorMessage }}</p>
+          </div>
+
+          <div v-if="hasWarnings" class="warning-box">
+            <h4>解析警告</h4>
+            <p v-for="(warning, idx) in warningsArray" :key="idx">{{ warning }}</p>
+          </div>
+
+          <div v-if="hasAmbiguity" class="ambiguity-section">
+            <div class="ambiguity-title">检测到句法歧义</div>
+            <div class="branch-list">
+              <div v-for="(branch, idx) in ambiguityBranchesArray" :key="idx" class="branch-item" :class="{ selected: selectedBranchIndex === idx }" @click="selectBranch(idx)">
+                <strong>分支 {{ idx + 1 }}:</strong> {{ branch.description }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-panel">
+          <div class="panel">
+            <div class="panel-title">解析状态</div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-value">{{ tokenCount }}</div>
+                <div class="stat-label">词语数</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">{{ arcCount }}</div>
+                <div class="stat-label">依存弧</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">{{ stateCount }}</div>
+                <div class="stat-label">转换步数</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" :class="{ error: !parseResultSuccess, success: parseResultSuccess }">
+                  {{ parseResultSuccess ? '成功' : '失败' }}
+                </div>
+                <div class="stat-label">解析状态</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">解析栈</div>
+            <div class="parse-stack">
+              <div v-for="(item, idx) in stackArray" :key="'stack-' + idx" class="stack-item" :class="{ highlight: hasConflicts && idx === stackArray.length - 1, crash: errorTypeValue === 'recursion-crash' && idx === stackArray.length - 1 }">
+                {{ getWordById(item) }}
+              </div>
+              <div v-if="stackArray.length === 0" class="stack-item" style="opacity: 0.5;">空栈</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">缓冲区</div>
+            <div class="buffer-queue">
+              <div v-for="(item, idx) in bufferArray" :key="'buffer-' + idx" class="buffer-item" :class="{ active: idx === 0 && isParsing }">
+                {{ getWordById(item) }}
+              </div>
+              <div v-if="bufferArray.length === 0" class="buffer-item" style="opacity: 0.5;">空队列</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">转换历史</div>
+            <div class="transition-history">
+              <div v-for="(action, idx) in historyArray" :key="'history-' + idx" class="transition-item">
+                <span class="action">{{ action }}</span>
+                <span class="detail">{{ getTransitionDetail(idx) }}</span>
+              </div>
+              <div v-if="historyArray.length === 0" style="opacity: 0.5; text-align: center; padding: 20px;">暂无转换记录</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">错误分析</div>
+            <div class="info-panel">
+              <div class="info-item">
+                <span class="label">错误类型</span>
+                <span class="value" :class="{ error: hasLocalOptimumError, warning: hasAttentionOverflow }">
+                  {{ errorTypeName }}
+                </span>
+              </div>
+              <div v-if="hasLocalOptimumError" class="info-item">
+                <span class="label">局部最优</span>
+                <span class="value warning">检测到</span>
+              </div>
+              <div v-if="hasAttentionOverflow" class="info-item">
+                <span class="label">注意力溢出</span>
+                <span class="value warning">检测到</span>
+              </div>
+              <div v-if="hasRecursionCrash" class="info-item">
+                <span class="label">递归崩溃</span>
+                <span class="value error">检测到</span>
+              </div>
+              <div class="info-item">
+                <span class="label">歧义分支</span>
+                <span class="value">{{ hasAmbiguity ? '存在' : '无' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue
+
+    createApp({
+      setup() {
+        const inputSentence = ref('')
+        const isParsing = ref(false)
+        const parseResult = ref(null)
+        const presets = ref([])
+        const activePreset = ref(null)
+        const selectedBranch = ref(0)
+        const animationEnabled = ref(true)
+        const conflictNodes = ref([])
+        const showStamp = ref(false)
+        const stampText = ref('解析完成')
+        const stampPosition = ref('translate(0, 0)')
+        const svgRef = ref(null)
+        const canvasContainer = ref(null)
+        const hoveredArc = ref(null)
+        const tooltipPosition = ref({ x: 0, y: 0 })
+
+        const width = ref(800)
+        const height = ref(500)
+
+        const parseResultSuccess = computed(() => parseResult.value && parseResult.value.success)
+        const tokenCount = computed(() => {
+          if (!parseResult.value) return 0
+          if (parseResult.value.tokenCount !== undefined) return parseResult.value.tokenCount
+          if (!parseResult.value.tokens) return 0
+          return Math.max(0, parseResult.value.tokens.length - 1)
+        })
+        const arcCount = computed(() => {
+          if (!parseResult.value) return 0
+          if (parseResult.value.arcCount !== undefined) return parseResult.value.arcCount
+          if (!parseResult.value.arcs) return 0
+          return parseResult.value.arcs.length
+        })
+        const stateCount = computed(() => {
+          if (!parseResult.value) return 0
+          if (parseResult.value.stateCount !== undefined) return parseResult.value.stateCount
+          if (!parseResult.value.states) return 0
+          return parseResult.value.states.length
+        })
+        const hasError = computed(() => parseResult.value && parseResult.value.error)
+        const errorMessage = computed(() => parseResult.value && parseResult.value.error ? parseResult.value.error : '')
+        const hasWarnings = computed(() => parseResult.value && parseResult.value.finalState && parseResult.value.finalState.warnings && parseResult.value.finalState.warnings.length > 0)
+        const warningsArray = computed(() => parseResult.value && parseResult.value.finalState && parseResult.value.finalState.warnings ? parseResult.value.finalState.warnings : [])
+        const hasAmbiguity = computed(() => parseResult.value && parseResult.value.ambiguityDetected)
+        const conflictNodesArray = computed(() => conflictNodes.value)
+        const stackArray = computed(() => parseResult.value && parseResult.value.finalState && parseResult.value.finalState.stack ? parseResult.value.finalState.stack : [])
+        const bufferArray = computed(() => parseResult.value && parseResult.value.finalState && parseResult.value.finalState.buffer ? parseResult.value.finalState.buffer : [])
+        const historyArray = computed(() => parseResult.value && parseResult.value.finalState && parseResult.value.finalState.history ? parseResult.value.finalState.history : [])
+        const hasConflicts = computed(() => parseResult.value && parseResult.value.finalState && parseResult.value.finalState.conflicts && parseResult.value.finalState.conflicts.length > 0)
+        const hasLocalOptimumError = computed(() => parseResult.value && parseResult.value.localOptimumError)
+        const hasAttentionOverflow = computed(() => parseResult.value && parseResult.value.attentionOverflow)
+        const hasRecursionCrash = computed(() => parseResult.value && parseResult.value.recursionCrash)
+        const errorTypeValue = computed(() => parseResult.value && parseResult.value.errorType)
+
+        const errorTypeName = computed(() => {
+          if (!parseResult.value) return '无'
+          if (parseResult.value.localOptimumError) return '局部最优'
+          if (parseResult.value.attentionOverflow) return '注意力溢出'
+          if (parseResult.value.recursionCrash) return '递归崩溃'
+          if (parseResult.value.error) return '解析失败'
+          return '正常'
+        })
+
+        const stampPositionValue = computed(() => stampPosition.value)
+        const selectedBranchIndex = computed(() => selectedBranch.value)
+
+        const displayNodes = computed(() => {
+          if (!parseResult.value || !parseResult.value.tokens) return []
+          const tokens = parseResult.value.tokens
+          const arcs = parseResult.value.arcs || []
+          const count = tokens.length
+          if (count === 0) return []
+
+          const svgWidth = width.value
+          const svgHeight = height.value
+          
+          const nodePositions = {}
+          const tree = {}
+          
+          tokens.forEach(t => {
+            tree[t.id] = { children: [], token: t }
+          })
+          
+          arcs.forEach(arc => {
+            if (!tree[arc.from]) tree[arc.from] = { children: [], token: null }
+            if (!tree[arc.to]) tree[arc.to] = { children: [], token: null }
+            tree[arc.from].children.push({ id: arc.to, label: arc.label })
+          })
+          
+          const levels = []
+          const queue = [{ id: 0, x: svgWidth / 2, y: 60, level: 0 }]
+          
+          while (queue.length > 0) {
+            const current = queue.shift()
+            nodePositions[current.id] = { x: current.x, y: current.y }
+            levels[current.level] = levels[current.level] || []
+            levels[current.level].push(current.id)
+            
+            const children = tree[current.id] ? tree[current.id].children : []
+            if (children.length > 0) {
+              const levelWidth = Math.min(svgWidth - 100, children.length * 120)
+              const startX = current.x - levelWidth / 2
+              const step = levelWidth / Math.max(children.length - 1, 1)
+              
+              children.forEach((child, idx) => {
+                queue.push({ 
+                  id: child.id, 
+                  x: startX + idx * step, 
+                  y: current.y + 100, 
+                  level: current.level + 1 
+                })
+              })
+            }
+          }
+          
+          const maxLevel = Math.max(...levels.map((_, i) => i))
+          const totalHeight = (maxLevel + 1) * 100 + 80
+          const scale = Math.min(1, (svgHeight - 60) / totalHeight)
+          
+          return tokens.map(t => {
+            const pos = nodePositions[t.id] || { x: svgWidth / 2, y: svgHeight / 2 }
+            return {
+              ...t,
+              x: pos.x,
+              y: 60 + (pos.y - 60) * scale
+            }
+          })
+        })
+
+        const displayArcs = computed(() => {
+          return (parseResult.value && parseResult.value.arcs) || []
+        })
+
+        const arcs = computed(() => {
+          const nodePositions = {}
+          displayNodes.value.forEach(node => {
+            nodePositions[node.id] = { x: node.x, y: node.y }
+          })
+          return displayArcs.value.map(arc => ({
+            ...arc,
+            fromPos: nodePositions[arc.from],
+            toPos: nodePositions[arc.to]
+          }))
+        })
+
+        const nodes = computed(() => displayNodes.value)
+
+        const ambiguityBranchesArray = computed(() => {
+          if (!parseResult.value || !parseResult.value.ambiguityDetected) return []
+          return [
+            { description: '主语优先分析', arcs: parseResult.value.arcs.filter(a => a.label === 'nsubj') },
+            { description: '宾语优先分析', arcs: parseResult.value.arcs.filter(a => a.label === 'dobj') }
+          ]
+        })
+
+        function getArcPath(arc) {
+          if (!arc.fromPos || !arc.toPos) return ''
+          const from = arc.fromPos
+          const to = arc.toPos
+          const midX = (from.x + to.x) / 2
+          const midY = (from.y + to.y) / 2
+          return 'M ' + from.x + ' ' + from.y + ' Q ' + midX + ' ' + (midY - 40) + ' ' + to.x + ' ' + to.y
+        }
+
+        function getArcColor(label) {
+          const colors = {
+            'ROOT': '#e74c3c', 'nsubj': '#3498db', 'dobj': '#27ae60',
+            'advmod': '#9b59b6', 'det': '#f39c12', 'ccomp': '#e67e22',
+            'amod': '#1abc9c', 'case': '#95a5a6', 'cc': '#e74c3c'
+          }
+          return colors[label] || '#3498db'
+        }
+
+        function getMarkerUrl(arc) {
+          if (arc.label === 'ROOT') return 'url(#arrowhead-root)'
+          if (arc.label === 'nsubj' || arc.label === 'dobj') return 'url(#arrowhead-conflict)'
+          return 'url(#arrowhead)'
+        }
+
+        function getArcLabelPosition(arc) {
+          if (!arc.fromPos || !arc.toPos) return { x: 0, y: 0 }
+          return {
+            x: (arc.fromPos.x + arc.toPos.x) / 2,
+            y: (arc.fromPos.y + arc.toPos.y) / 2 - 15
+          }
+        }
+
+        function getWordById(id) {
+          if (id === 0) return 'ROOT'
+          const tokens = parseResult.value && parseResult.value.tokens
+          const token = tokens && tokens.find(t => t.id === id)
+          return (token && token.word) || 'ID:' + id
+        }
+
+        function getTransitionDetail(idx) {
+          const states = parseResult.value && parseResult.value.states
+          const state = states && states[idx]
+          if (!state) return ''
+          return '栈:' + state.stack.length + ' 缓冲:' + state.buffer.length
+        }
+
+        function getArcDescription(label) {
+          const descriptions = {
+            'ROOT': '根节点 - 句子的中心谓语',
+            'nsubj': '主语 - 动作的执行者',
+            'dobj': '宾语 - 动作的承受者',
+            'advmod': '状语 - 修饰动词的副词',
+            'det': '限定词 - 冠词或指示代词',
+            'ccomp': '补语从句 - 动词的补语',
+            'amod': '定语 - 修饰名词的形容词',
+            'case': '格标记 - 介词或后置词',
+            'cc': '并列连词 - 连接并列成分',
+            'dep': '依存关系 - 未指定的依存关系'
+          }
+          return descriptions[label] || `依存关系: ${label}`
+        }
+
+        function handleArcMouseEnter(arc, event) {
+          hoveredArc.value = arc
+          const rect = canvasContainer.value.getBoundingClientRect()
+          tooltipPosition.value = {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+          }
+        }
+
+        function handleArcMouseLeave() {
+          hoveredArc.value = null
+        }
+
+        async function loadPreset(preset) {
+          activePreset.value = preset.id
+          inputSentence.value = preset.sentence
+          await parseSentence()
+        }
+
+        async function parseSentence() {
+          if (!inputSentence.value.trim()) return
+
+          isParsing.value = true
+          animationEnabled.value = true
+          conflictNodes.value = []
+          showStamp.value = false
+
+          try {
+            const response = await fetch('/api/parse', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sentence: inputSentence.value })
+            })
+            const data = await response.json()
+            parseResult.value = data
+
+            if (data.finalState && data.finalState.conflicts) {
+              const conflictSet = new Set()
+              data.finalState.conflicts.forEach(c => {
+                if (c.includes('LEFT-ARC')) {
+                  const state = data.states.find(s => s.conflicts && s.conflicts.includes(c))
+                  if (state) conflictSet.add(state.stack[state.stack.length - 1])
+                }
+              })
+              conflictNodes.value = Array.from(conflictSet)
+            }
+
+            setTimeout(() => {
+              showStamp.value = true
+              stampText.value = data.success ? '解析完成' : '解析失败'
+              const svgWidth = width.value
+              const svgHeight = height.value
+              stampPosition.value = 'translate(' + (svgWidth / 2 - 50) + ', ' + (svgHeight / 2 - 50) + ')'
+            }, 1500)
+
+          } catch (error) {
+            parseResult.value = {
+              success: false,
+              tokens: [],
+              arcs: [],
+              states: [],
+              finalState: { stack: [], buffer: [], arcs: [], history: [], conflicts: [], warnings: [], errors: [error.message] },
+              error: error.message
+            }
+          } finally {
+            isParsing.value = false
+          }
+        }
+
+        function clearAll() {
+          inputSentence.value = ''
+          parseResult.value = null
+          activePreset.value = null
+          selectedBranch.value = 0
+          conflictNodes.value = []
+          showStamp.value = false
+        }
+
+        onMounted(async () => {
+          if (canvasContainer.value) {
+            width.value = canvasContainer.value.clientWidth
+            height.value = canvasContainer.value.clientHeight
+          }
+
+          window.addEventListener('resize', () => {
+            if (canvasContainer.value) {
+              width.value = canvasContainer.value.clientWidth
+              height.value = canvasContainer.value.clientHeight
+            }
+          })
+
+          try {
+            const response = await fetch('/api/presets')
+            presets.value = await response.json()
+          } catch (error) {
+            console.error('Failed to load presets:', error)
+          }
+        })
+
+        return {
+          inputSentence, isParsing, parseResult, presets, activePreset, selectedBranch,
+          animationEnabled, conflictNodes, showStamp, stampText, stampPosition,
+          svgRef, canvasContainer, nodes, arcs,
+          parseResultSuccess, tokenCount, arcCount, stateCount,
+          hasError, errorMessage, hasWarnings, warningsArray, hasAmbiguity,
+          conflictNodesArray, stackArray, bufferArray, historyArray, hasConflicts,
+          hasLocalOptimumError, hasAttentionOverflow, hasRecursionCrash,
+          errorTypeValue, errorTypeName, stampPositionValue, selectedBranchIndex,
+          ambiguityBranchesArray,
+          getArcPath, getArcColor, getMarkerUrl, getArcLabelPosition,
+          getWordById, getTransitionDetail, selectBranch,
+          loadPreset, parseSentence, clearAll
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
