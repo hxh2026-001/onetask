@@ -1,0 +1,18 @@
+{
+  "name": "ray-tracer-frontend",
+  "version": "1.0.0",
+  "description": "SolidJS frontend for ray tracer",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "solid-js": "^1.8.17"
+  },
+  "devDependencies": {
+    "vite": "^5.2.11",
+    "vite-plugin-solid": "^2.10.2"
+  }
+}
