@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智能排班系统 - 遗传算法</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <div class="header">
+      <h1>🧬 智能排班系统 - 遗传算法</h1>
+      <p style="color: #aaa; margin-top: 10px;">基于遗传算法的智能排班解决方案</p>
+    </div>
+
+    <div class="presets">
+      <button 
+        v-for="preset in presets" 
+        :key="preset.key"
+        :class="['preset-btn', { active: selectedPreset === preset.key }]"
+        @click="loadPreset(preset.key)"
+      >
+        <div style="font-size: 18px; margin-bottom: 5px;">{{ preset.name }}</div>
+        <div style="font-size: 12px; opacity: 0.8;">{{ preset.description }}</div>
+      </button>
+    </div>
+
+    <div class="controls">
+      <button 
+        class="control-btn run" 
+        :disabled="isRunning || !selectedPreset"
+        @click="runAlgorithm"
+      >
+        {{ isRunning ? '运行中...' : '🚀 运行算法' }}
+      </button>
+      <button 
+        class="control-btn animate" 
+        :disabled="results.length === 0"
+        @click="showCrossoverAnimation"
+      >
+        🧬 DNA交叉动画
+      </button>
+      <button 
+        class="control-btn animate" 
+        :disabled="fitnessHistory.length === 0"
+        @click="showFitnessAnimation"
+      >
+        📈 适应度爬坡
+      </button>
+      <button 
+        class="control-btn animate" 
+        :disabled="results.length === 0"
+        @click="showFilterAnimation"
+      >
+        🔍 漏斗过滤
+      </button>
+      <button 
+        class="control-btn animate" 
+        :disabled="results.length === 0"
+        @click="showScheduleAnimation"
+      >
+        📅 排班渐显
+      </button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="label">当前代数</div>
+        <div class="value">{{ currentGeneration + 1 }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">最佳适应度</div>
+        <div class="value">{{ currentBest?.fitness || 0 }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">计算耗时</div>
+        <div class="value">{{ computationTime.toFixed(2) }}ms</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">内存使用</div>
+        <div class="value">{{ memoryUsage }}MB</div>
+      </div>
+    </div>
+
+    <div class="generation-slider" v-if="results.length > 0">
+      <input 
+        type="range" 
+        :min="0" 
+        :max="results.length - 1" 
+        v-model.number="currentGeneration"
+      />
+      <div style="text-align: center; margin-top: 10px; color: #aaa;">
+        第 {{ currentGeneration + 1 }} / {{ results.length }} 代
+      </div>
+    </div>
+
+    <div class="animation-panel" v-if="showAnimation">
+      <div v-if="animationType === 'crossover'">
+        <h3>🧬 DNA链交叉动画</h3>
+        <div class="dna-animation">
+          <div class="dna-strand">
+            <div 
+              v-for="(gene, index) in dnaAnimationData.parent1" 
+              :key="'p1-' + index"
+              :class="['dna-gene', 'parent1', { crossover: index >= dnaAnimationData.crossoverPoint }]"
+            >
+              {{ gene }}
+            </div>
+          </div>
+          <div style="text-align: center; color: #00d4ff;">父代1</div>
+          
+          <div class="dna-strand">
+            <div 
+              v-for="(gene, index) in dnaAnimationData.parent2" 
+              :key="'p2-' + index"
+              :class="['dna-gene', 'parent2', { crossover: index >= dnaAnimationData.crossoverPoint }]"
+            >
+              {{ gene }}
+            </div>
+          </div>
+          <div style="text-align: center; color: #ff6b6b;">父代2</div>
+          
+          <div style="text-align: center; font-size: 24px; margin: 10px;">↓ 交叉点: {{ dnaAnimationData.crossoverPoint }}</div>
+          
+          <div class="dna-strand">
+            <div 
+              v-for="(gene, index) in dnaAnimationData.child" 
+              :key="'c-' + index"
+              class="dna-gene child"
+            >
+              {{ gene }}
+            </div>
+          </div>
+          <div style="text-align: center; color: #2ed573;">子代</div>
+        </div>
+      </div>
+
+      <div v-else-if="animationType === 'fitness'">
+        <h3>📈 适应度爬坡动画</h3>
+        <div class="fitness-chart">
+          <div class="fitness-bar">
+            <div 
+              v-for="(item, index) in fitnessHistory.slice(0, currentGeneration + 1)" 
+              :key="index"
+              class="fitness-bar-item"
+              :style="{ height: (item.best / maxFitness * 100) + '%' }"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="animationType === 'conflict'">
+        <h3>⚠️ 冲突标记动画</h3>
+        <div class="conflict-list">
+          <div 
+            v-for="(conflict, index) in conflicts" 
+            :key="index"
+            :class="['conflict-item', conflict.type]"
+          >
+            {{ conflict.message }}
+          </div>
+          <div v-if="conflicts.length === 0" style="color: #2ed573; text-align: center;">
+            ✅ 无冲突
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="animationType === 'filter'">
+        <h3>🔍 个体筛选漏斗动画</h3>
+        <div class="filter-animation">
+          <div class="funnel-container">
+            <div class="funnel">
+              <div 
+                v-for="(item, index) in filteredPopulation" 
+                :key="index"
+                class="funnel-item"
+                :style="{ animationDelay: (index * 0.1) + 's' }"
+              >
+                适应度: {{ item.fitness.toFixed(0) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="animationType === 'schedule'">
+        <h3>📅 排班表单元格渐显动画</h3>
+        <div class="schedule-grid">
+          <div></div>
+          <div class="schedule-header">周一</div>
+          <div class="schedule-header">周二</div>
+          <div class="schedule-header">周三</div>
+          <div class="schedule-header">周四</div>
+          <div class="schedule-header">周五</div>
+          <div class="schedule-header">周六</div>
+          <div class="schedule-header">周日</div>
+          
+          <template v-for="slot in 3" :key="'slot-' + slot">
+            <div class="schedule-header slot-label">时段{{ slot }}</div>
+            <div 
+              v-for="day in 7" 
+              :key="'cell-' + slot + '-' + day"
+              :class="[
+                'schedule-cell',
+                getCellClass(day - 1, slot - 1)
+              ]"
+              :style="{ '--i': ((slot - 1) * 7 + (day - 1)) }"
+            >
+              <div class="slot-label">{{ getCellContent(day - 1, slot - 1)?.employee?.name || '-' }}</div>
+              <div v-if="getCellContent(day - 1, slot - 1)" class="skill-indicator">
+                {{ getCellContent(day - 1, slot - 1)?.skillMatch }}/{{ getCellContent(day - 1, slot - 1)?.totalSkills }} 技能
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats" v-if="results.length > 0">
+      <div class="stat-card">
+        <div class="label">冲突数量</div>
+        <div class="value" :style="{ color: conflicts.length > 0 ? '#ff6b6b' : '#2ed573' }">
+          {{ conflicts.length }}
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="label">员工数</div>
+        <div class="value">{{ employees.length }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">班次数</div>
+        <div class="value">{{ shifts.length }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">种群规模</div>
+        <div class="value">{{ results[0]?.population.length || 0 }}</div>
+      </div>
+    </div>
+
+    <div class="schedule-result" v-if="results.length > 0 && currentBest">
+      <h2>📅 当前最优排班表</h2>
+      <div class="schedule-table">
+        <table>
+          <thead>
+            <tr>
+              <th>时段</th>
+              <th>周一</th>
+              <th>周二</th>
+              <th>周三</th>
+              <th>周四</th>
+              <th>周五</th>
+              <th>周六</th>
+              <th>周日</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="slot in 3" :key="'slot-row-' + slot">
+              <td class="slot-header">时段{{ slot }}</td>
+              <td 
+                v-for="day in 7" 
+                :key="'result-cell-' + slot + '-' + day"
+                :class="[
+                  'schedule-cell',
+                  getResultCellClass(day - 1, slot - 1)
+                ]"
+              >
+                <div class="employee-name">{{ getResultCellContent(day - 1, slot - 1)?.employee?.name || '-' }}</div>
+                <div v-if="getResultCellContent(day - 1, slot - 1)" class="skill-info">
+                  <span v-if="getResultCellContent(day - 1, slot - 1)?.skillMatch === getResultCellContent(day - 1, slot - 1)?.totalSkills" class="skill-full-badge">✓</span>
+                  <span v-else-if="getResultCellContent(day - 1, slot - 1)?.skillMatch > 0" class="skill-partial-badge">~</span>
+                  <span v-else class="skill-none-badge">✗</span>
+                  <span class="skill-text">{{ getResultCellContent(day - 1, slot - 1)?.skillMatch }}/{{ getResultCellContent(day - 1, slot - 1)?.totalSkills }}</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="employee-hours" v-if="results.length > 0">
+        <h3>👥 员工工时统计</h3>
+        <div class="hours-grid">
+          <div 
+            v-for="emp in employees" 
+            :key="emp.id" 
+            class="hours-card"
+            :class="{ warning: getEmployeeHours(emp.id) > emp.max_hours }"
+          >
+            <div class="emp-name">{{ emp.name }}</div>
+            <div class="emp-hours">
+              <span class="hours-value">{{ getEmployeeHours(emp.id) }}</span>
+              <span class="hours-max">/ {{ emp.max_hours }}小时</span>
+            </div>
+            <div class="emp-skills">{{ emp.skills.join(', ') }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/vue-app.js"></script>
+</body>
+</html>
