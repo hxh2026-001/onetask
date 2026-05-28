@@ -1,0 +1,137 @@
+{
+  "tokenRules": [
+    { "type": "WHITESPACE", "pattern": "\\s+" },
+    { "type": "COMMENT", "pattern": "//.*" },
+    { "type": "KEYWORD", "pattern": "\\b(var|let|const|if|else|while|for|function|return|true|false|null|undefined)\\b" },
+    { "type": "TYPE", "pattern": "\\b(number|string|boolean|any)\\b" },
+    { "type": "IDENTIFIER", "pattern": "[a-zA-Z_][a-zA-Z0-9_]*" },
+    { "type": "NUMBER", "pattern": "\\d+" },
+    { "type": "STRING", "pattern": "\"[^\"]*\"|'[^']*'" },
+    { "type": "OPERATOR", "pattern": "([+\\-*/=<>!&|])+|==|!=|<=|>=|&&|\\|\\|" },
+    { "type": "DELIMITER", "pattern": "[(){};,.]" },
+    { "type": "EOF", "pattern": "\\$" }
+  ],
+  "productionRules": [
+    {
+      "name": "Program -> Statement*",
+      "match": (node, token) => node.type === "Program",
+      "apply": (node, token) => {
+        const statement = { type: "Statement", children: [] };
+        node.children.push(statement);
+        return statement;
+      }
+    },
+    {
+      "name": "Statement -> VariableDeclaration",
+      "match": (node, token) => node.type === "Statement" && token.type === "KEYWORD" && ["var", "let", "const"].includes(token.value),
+      "apply": (node, token) => {
+        const decl = { type: "VariableDeclaration", kind: token.value, children: [] };
+        node.children.push(decl);
+        return decl;
+      }
+    },
+    {
+      "name": "Statement -> ExpressionStatement",
+      "match": (node, token) => node.type === "Statement" && token.type === "IDENTIFIER",
+      "apply": (node, token) => {
+        const expr = { type: "ExpressionStatement", children: [] };
+        node.children.push(expr);
+        return expr;
+      }
+    },
+    {
+      "name": "Statement -> IfStatement",
+      "match": (node, token) => node.type === "Statement" && token.type === "KEYWORD" && token.value === "if",
+      "apply": (node, token) => {
+        const ifStmt = { type: "IfStatement", children: [] };
+        node.children.push(ifStmt);
+        return ifStmt;
+      }
+    },
+    {
+      "name": "Statement -> BlockStatement",
+      "match": (node, token) => node.type === "Statement" && token.type === "DELIMITER" && token.value === "{",
+      "apply": (node, token) => {
+        const block = { type: "BlockStatement", body: [] };
+        node.children.push(block);
+        return block;
+      }
+    },
+    {
+      "name": "VariableDeclaration -> IDENTIFIER",
+      "match": (node, token) => node.type === "VariableDeclaration" && token.type === "IDENTIFIER",
+      "apply": (node, token) => {
+        node.id = { type: "Identifier", name: token.value };
+        return node;
+      }
+    },
+    {
+      "name": "Expression -> IDENTIFIER",
+      "match": (node, token) => ["ExpressionStatement", "BinaryExpression"].includes(node.type) && token.type === "IDENTIFIER",
+      "apply": (node, token) => {
+        const id = { type: "Identifier", name: token.value };
+        if (node.type === "ExpressionStatement") {
+          node.expression = id;
+        } else {
+          node.left = id;
+        }
+        return id;
+      }
+    },
+    {
+      "name": "Expression -> NUMBER",
+      "match": (node, token) => ["ExpressionStatement", "BinaryExpression"].includes(node.type) && token.type === "NUMBER",
+      "apply": (node, token) => {
+        const lit = { type: "Literal", value: parseInt(token.value), raw: token.value };
+        if (node.type === "ExpressionStatement") {
+          node.expression = lit;
+        } else {
+          node.left = lit;
+        }
+        return lit;
+      }
+    },
+    {
+      "name": "BinaryExpression -> OPERATOR",
+      "match": (node, token) => node.type === "Identifier" && token.type === "OPERATOR",
+      "apply": (node, token) => {
+        const parent = node.parent;
+        const binary = { type: "BinaryExpression", operator: token.value, left: node };
+        if (parent.type === "ExpressionStatement") {
+          parent.expression = binary;
+        }
+        return binary;
+      }
+    },
+    {
+      "name": "BinaryExpression -> NUMBER",
+      "match": (node, token) => node.type === "BinaryExpression" && !node.right && token.type === "NUMBER",
+      "apply": (node, token) => {
+        node.right = { type: "Literal", value: parseInt(token.value), raw: token.value };
+        return node.right;
+      }
+    },
+    {
+      "name": "BinaryExpression -> IDENTIFIER",
+      "match": (node, token) => node.type === "BinaryExpression" && !node.right && token.type === "IDENTIFIER",
+      "apply": (node, token) => {
+        node.right = { type: "Identifier", name: token.value };
+        return node.right;
+      }
+    },
+    {
+      "name": "Delimiter -> ;",
+      "match": (node, token) => token.type === "DELIMITER" && token.value === ";",
+      "apply": (node, token) => {
+        return node.parent || node;
+      }
+    },
+    {
+      "name": "Delimiter -> }",
+      "match": (node, token) => token.type === "DELIMITER" && token.value === "}",
+      "apply": (node, token) => {
+        return node.parent || node;
+      }
+    }
+  ]
+}

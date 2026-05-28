@@ -1,0 +1,32 @@
+{
+  "presets": [
+    {
+      "id": "preset1",
+      "name": "左递归消除",
+      "description": "展示左递归语法结构",
+      "code": "function factorial(n) {\n  if (n == 0) {\n    return 1;\n  } else {\n    return n * factorial(n - 1);\n  }\n}\n\nlet result = factorial(5);",
+      "expectedIssues": ["left_recursion"]
+    },
+    {
+      "id": "preset2",
+      "name": "悬空 else",
+      "description": "展示悬空 else 问题",
+      "code": "if (x > 0)\n  if (y > 0)\n    result = 1;\nelse\n  result = 0;",
+      "expectedIssues": ["dangling_else"]
+    },
+    {
+      "id": "preset3",
+      "name": "类型不匹配",
+      "description": "展示类型推断错误",
+      "code": "let num: number = 42;\nlet str: string = \"hello\";\nlet result = num + str;\nconsole.log(result);",
+      "expectedIssues": ["type_mismatch"]
+    },
+    {
+      "id": "preset4",
+      "name": "作用域链断裂",
+      "description": "展示作用域嵌套问题",
+      "code": "function outer() {\n  let x = 10;\n  \n  function inner1() {\n    let y = 20;\n    \n    function inner2() {\n      let z = 30;\n      \n      function inner3() {\n        let w = 40;\n        \n        function deepest() {\n          console.log(x + y + z + w);\n        }\n        deepest();\n      }\n      inner3();\n    }\n    inner2();\n  }\n  inner1();\n}\nouter();",
+      "expectedIssues": ["scope_chain"]
+    }
+  ]
+}
