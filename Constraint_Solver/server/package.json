@@ -1,0 +1,19 @@
+{
+  "name": "constraint-solver-server",
+  "version": "1.0.0",
+  "description": "Koa backend for geometric constraint solver",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "@koa/cors": "^5.0.0",
+    "koa": "^2.15.0",
+    "koa-bodyparser": "^4.4.1",
+    "koa-router": "^12.0.1",
+    "koa-static": "^5.0.0",
+    "mathjs": "^12.4.0",
+    "sql.js": "^1.14.1"
+  }
+}

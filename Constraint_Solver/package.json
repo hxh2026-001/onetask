@@ -1,0 +1,17 @@
+{
+  "name": "constraint-solver",
+  "version": "1.0.0",
+  "description": "Geometric Constraint Solver with Solid + Koa + SQLite",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "node server/index.js",
+    "client:dev": "cd client && npm run dev",
+    "server:build": "cd server && npm install",
+    "client:build": "cd client && npm install && npm run build",
+    "start": "node server/index.js"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
